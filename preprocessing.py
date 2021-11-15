@@ -4,7 +4,7 @@
 
 Module will load the dataset from (Angenet-Mari et. al 2020) and save a file of high-scoring and low-scoring switch sequences
 
-Written by Aiden Riley, Juan Montezo, Eric South
+Written by Aidan Riley, Juan Montezo, Eric South
 --------------------------------------------------------------------------------
 '''
 # Supporting Libaries

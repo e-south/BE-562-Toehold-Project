@@ -4,7 +4,7 @@ Description:
 
 Primary Entrypoint into Toehold Project
 
-Written by Aiden Riley, Juan Montezo, Eric South
+Written by Aidan Riley, Juan Montezo, Eric South
 --------------------------------------------------------------------------------
 """
 
