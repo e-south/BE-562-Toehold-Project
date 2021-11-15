@@ -12,7 +12,7 @@ import pandas as pd
 #Load in the dataset as a pandas dataframe
 #Make sure the datafile is in the working directory
 def main():
-    dataset = pd.read_csv('Toehold_Dataset_Final_2019-10-23.csv')
+    dataset = pd.read_csv('data/Toehold_Dataset_Final_2019-10-23.csv')
 
     #Sort Values based on quality control score
     dataset.sort_values(['QC_ON_OFF'],inplace=True,ascending=True)
@@ -30,10 +30,10 @@ def main():
 
     #Save each set to a new csv file
     low_score = dataset[dataset['ON_OFF'] < 0.05]
-    low_score.to_csv('low_score.csv')
+    low_score.to_csv('data/low_score.csv')
 
     high_score = dataset[dataset['ON_OFF']> 0.85]
-    high_score.to_csv('high_score.csv')
+    high_score.to_csv('data/high_score.csv')
 
 
 

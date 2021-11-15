@@ -14,8 +14,8 @@ import pandas as pd
 import random
 
 # Load in the scoring data
-low_scores = pd.read_csv('low_score.csv')
-high_scores = pd.read_csv('high_score.csv')
+low_scores = pd.read_csv('data/low_score.csv')
+high_scores = pd.read_csv('data/high_score.csv')
 
 nucleotide_dict = {'A': 0, 'G': 1, 'C': 2, 'T': 3}
 nucleotide_list = ['A', 'G', 'C', 'T']
