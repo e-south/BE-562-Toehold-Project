@@ -46,28 +46,20 @@ low_scores = to_sequence_array(low_scores, 155)
 
 # Function will take a set of sequences as input and return a Matrix of the maximum likelihood estimate or random guess for each motif at each position
 # Each row is a nucleotide (A,G,C,T) and each column is the probablity of that nucleotide at that position
-def init_guess_nucleotides(seq_array, length=None, random=False):
-    if random == False:
-        output = np.zeros(shape=(4, seq_array.shape[1]))
-        total = seq_array.shape[0]
-        for i in range(seq_array.shape[1]):
-            output[0, i] = sum(seq_array[:, i] == 'A') / total
-            output[1, i] = sum(seq_array[:, i] == 'G') / total
-            output[2, i] = sum(seq_array[:, i] == 'C') / total
-            output[3, i] = sum(seq_array[:, i] == 'T') / total
-        return output
-
-    if random == True:
-        output = np.random.rand(4, seq_array.shape[1])
-        for i in range(output.shape[1]):
-            total = np.sum(output[:, i])
-            for j in range(output.shape[0]):
-                output[j, i] = output[j, i] / total
-        return output
+def init_guess_nucleotides(seq_array,length):
+    output = np.random.rand(4, length)
+    for i in range(length):
+        total = np.sum(output[:,i])
+        output[0,i] = output[0,i] / total
+        output[1,i] = output[1,i] / total
+        output[2,i] = output[2,i] / total
+        output[3,i] = output[3,i] / total
+    return output
 
 
 # find motif of len k values along a sequence
 # Takes high_score or low_score as input along with the length of the motif and the stopping tolerance
+
 
 def OOPS(seq_letters, k, tol=None, random_init=True, iteration_cap=100):
     print('Training Model...')
@@ -79,19 +71,16 @@ def OOPS(seq_letters, k, tol=None, random_init=True, iteration_cap=100):
 
     # Save the nucleotide probability array separate from the sequence array
     # Can be either maximum likelihood or randomized initial guess
-    if random_init:
-        motif_probs = init_guess_nucleotides(seq_letters, random=True)
-    else:
-        motif_probs = init_guess_nucleotides(seq_letters, random=False)
+    motif_probs = init_guess_nucleotides(seq_letters, k)
+    print(motif_probs.shape)
 
     # Assume nucleotide prob of 0.25 everywhere outside motif, probability of everything outside the motif is 0.25
-    background = 0.25 ** (motif_probs.shape[1] - k)
+    #     background = 0.25 ** (motif_probs.shape[1]-k)
     while iter_track < iteration_cap:
         for l in range(seq_letters.shape[0]):
 
             # Pop off one sequence to evaluate the probability of
             seq_to_train = seq_letters[l, :]
-
             # save the output probabilities of the motif
             output_probs = []
 
@@ -101,8 +90,7 @@ def OOPS(seq_letters, k, tol=None, random_init=True, iteration_cap=100):
                 total_motif_probability = 1
                 for j in range(k):
                     # Calculate the probability of this sequence from position i:k being a motif, multiply by everything else outside the motif
-
-                    total_motif_probability *= motif_probs[nucleotide_dict[seq_to_train[i + k]], i + k]
+                    total_motif_probability *= motif_probs[nucleotide_dict[seq_to_train[i + j]], j]
 
                 output_probs.append(total_motif_probability)
 
@@ -110,17 +98,26 @@ def OOPS(seq_letters, k, tol=None, random_init=True, iteration_cap=100):
             for i in range(seq_to_train.shape[0] - k):
                 z_matrix[l, i] = output_probs[i] / (sum(output_probs))
 
+        # Hard assign the max value of Z matrix in each row to 1
+        # May need to rethink this particular part of the code
+        #         for i in range(z_matrix.shape[0]):
+        #             max_idx = np.argmax(z_matrix[i,:])
+        #             z_matrix[i,:] = 0
+        #             z_matrix[i,max_idx] = 1
+
         # M step, using z_matrix to re-estimate frequency array
         # Probability of character c in position k along the length of the sequence
-        for i in range(seq_letters.shape[1] - k):
-            for j in range(len(nucleotide_list)):
-                character_indices = [seq_letters[:, i] == nucleotide_list[j]]
-                numerator = sum(z_matrix[character_indices[0], i])
+        new_freq = np.empty(shape=(z_matrix.shape[0], k), dtype='str')
+        for i in range(z_matrix.shape[0]):
+            letter_slice = seq_letters[i, np.argmax(z_matrix[i, :]):np.argmax(z_matrix[i, :]) + k]
 
-                denominator = sum(z_matrix[:, i])
+            new_freq[i, :] = letter_slice
+        for i in range(k):
+            motif_probs[0, i] = (new_freq[:, i] == 'A').sum() / z_matrix.shape[0]
+            motif_probs[1, i] = (new_freq[:, i] == 'G').sum() / z_matrix.shape[0]
+            motif_probs[2, i] = (new_freq[:, i] == 'C').sum() / z_matrix.shape[0]
+            motif_probs[3, i] = (new_freq[:, i] == 'T').sum() / z_matrix.shape[0]
 
-                prob = numerator / denominator
-                motif_probs[j, i] = prob
         iter_track += 1
     print('Done')
     return motif_probs
