@@ -28,15 +28,19 @@ nucleotide_list = ['A', 'G', 'C', 'T']
 
 # All functions after here will take a seq_array output as their input
 
-def to_sequence_array(entry, length,version='OOPS'):
+def to_sequence_array(entry, length, version='OOPS'):
+
     output = np.empty(shape=(entry.shape[0], length), dtype='str')
+    ##NOTE: length needs to reflect the # of columns used; for OOPS: 45; for CUSTOM: 255
+    print(entry.shape[0])
     value = None
     if version == 'OOPS':
         for i in range(entry.shape[0]):
-            value = entry.iloc[i, :]['switch'] + entry.iloc[i, :]['stem1'] + entry.iloc[i, :]['stem2']
+            value = entry.iloc[i, :]['switch']+ entry.iloc[i, :]['stem1'] + entry.iloc[i, :]['stem2']
             for j in range(len(value)):
                 output[i, j] = value[j]
-    if version =='CUSTOM':
+
+    if version == 'CUSTOM':
         for i in range(entry.shape[0]):
             value = entry.iloc[i, :]['pre_seq'] + entry.iloc[i, :]['promoter'] + entry.iloc[i, :]['loop1'] + \
                     entry.iloc[i, :]['switch'] + entry.iloc[i, :]['loop2'] + entry.iloc[i, :]['stem1'] + entry.iloc[i, :][
@@ -127,6 +131,36 @@ def OOPS(seq_letters, k, tol=None, random_init=True, iteration_cap=100):
         iter_track += 1
     print('Done')
     return motif_probs
+
+
+#def preprocessing(min_high_treshold,max_low_treshold):
+def preprocessing(UpperBound, LowerBound):
+    dataset = pd.read_csv('data/Toehold_Dataset_Final_2019-10-23.csv')
+
+    #Sort Values based on quality control score
+    dataset.sort_values(['QC_ON_OFF'],inplace=True,ascending=True)
+
+    #Filter out scores less than 2 as reported in the study
+    dataset = dataset[dataset['QC_ON_OFF'] > 2]
+    dataset.head()
+
+    #Now Sort Based on ON_OFF ratio to create the poorly performing and strongly performing switch sets
+    dataset.sort_values(['ON_OFF'],inplace=True,ascending=False)
+    dataset.head()
+
+    #Drop negative values as their meaning is unclear based on the study
+    dataset = dataset[dataset['ON_OFF'] > 0]
+
+    #Save each set to a new csv file
+    #low_score = dataset[dataset['ON_OFF'] < max_low_treshold]
+    #low_score.to_csv('data/low_score.csv')
+
+    #high_score = dataset[dataset['ON_OFF']> min_high_treshold]
+    #temp bracketed high_score
+
+    #high_score = dataset[(LowerBound < dataset['ON_OFF'] < UpperBound)]
+    high_score = dataset[(dataset['ON_OFF'] > LowerBound)&(dataset['ON_OFF']) < UpperBound ]
+    high_score.to_csv('data/high_score.csv')
 
 if __name__ == '__main__':
     main()
